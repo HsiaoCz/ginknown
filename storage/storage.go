@@ -1,8 +1,7 @@
 package storage
 
-
 type Storage struct{}
 
-func NewStorage()*Storage{
+func NewStorage() *Storage {
 	return &Storage{}
 }
