@@ -1,6 +1,11 @@
 app:
+  name: "ginknown"
+  mode: "dev"
   addr: 172.27.202.125
   port: 9088
+  version: "v0.0.1"
+  start_time: "2023-07-07"
+  machine_id: 1
 
 mysql:
   mysql_user: "root"

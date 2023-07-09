@@ -3,6 +3,7 @@ module github.com/HsiaoCz/ginknown
 go 1.20
 
 require (
+	github.com/bwmarrin/snowflake v0.3.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/spf13/viper v1.16.0

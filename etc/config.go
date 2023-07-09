@@ -16,8 +16,13 @@ type WebApp struct {
 }
 
 type AppConf struct {
-	Addr string `mapstructure:"addr"`
-	Port string `mapstructure:"port"`
+	Name      string `mapstructure:"name"`
+	Mode      string `mapstructure:"mode"`
+	Addr      string `mapstructure:"addr"`
+	Port      string `mapstructure:"port"`
+	Version   string `mapstructure:"version"`
+	StartTime string `mapstructure:"start_time"`
+	MachineId int64  `mapstructure:"machine_id"`
 }
 
 type MysqlConf struct {

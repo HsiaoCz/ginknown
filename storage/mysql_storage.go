@@ -4,10 +4,13 @@ import (
 	"fmt"
 
 	"github.com/HsiaoCz/ginknown/etc"
+	"github.com/HsiaoCz/ginknown/internal/server"
 	"github.com/HsiaoCz/ginknown/types"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
+
+var db *gorm.DB
 
 // mysql conf
 type mysqlConf struct {
@@ -20,6 +23,7 @@ type mysqlConf struct {
 
 type MysqlStorage struct {
 	mc *mysqlConf
+	ur server.UserRepo
 }
 
 func NewMysqlStorage() *MysqlStorage {
@@ -32,6 +36,7 @@ func NewMysqlStorage() *MysqlStorage {
 			mysql_port:     mcy.Mysql_Port,
 			db_name:        mcy.DB_Name,
 		},
+		ur: server.NewUserUseCase(db),
 	}
 }
 
@@ -42,5 +47,5 @@ func (ms *MysqlStorage) InitStorage() error {
 		return err
 	}
 	db.AutoMigrate(&types.User{})
-	return nil
+	return err
 }
