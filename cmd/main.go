@@ -6,6 +6,7 @@ import (
 	"github.com/HsiaoCz/ginknown/api"
 	"github.com/HsiaoCz/ginknown/etc"
 	"github.com/HsiaoCz/ginknown/storage"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := api.NewServer().Start(); err != nil {
+	if err := api.NewServer(gin.New(), storage.NewStorage()).Start(); err != nil {
 		log.Fatal(err)
 	}
 
