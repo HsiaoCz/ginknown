@@ -23,7 +23,7 @@ type mysqlConf struct {
 
 type MysqlStorage struct {
 	mc *mysqlConf
-	ur server.UserRepo
+	UR server.UserRepo
 }
 
 func NewMysqlStorage() *MysqlStorage {
@@ -36,7 +36,7 @@ func NewMysqlStorage() *MysqlStorage {
 			mysql_port:     mcy.Mysql_Port,
 			db_name:        mcy.DB_Name,
 		},
-		ur: server.NewUserUseCase(db),
+		UR: server.NewUserUseCase(db),
 	}
 }
 

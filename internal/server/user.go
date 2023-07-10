@@ -7,6 +7,7 @@ import (
 
 type UserRepo interface {
 	UserSingup(*types.User) error
+	GetUserEmail(email string) bool
 }
 
 type UserUseCase struct {
@@ -21,4 +22,8 @@ func NewUserUseCase(db *gorm.DB) *UserUseCase {
 
 func (uc *UserUseCase) UserSingup(user *types.User) (err error) {
 	return nil
+}
+
+func (uc *UserUseCase) GetUserEmail(email string) bool {
+	return true
 }
