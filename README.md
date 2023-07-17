@@ -174,31 +174,187 @@ func (c ResCode)Msg()string{
 
 ### 6、用户认证模式
 
-HTTP是一个无状态的协议，一次请求结束后，下次发送服务器就不知道这个请求是谁发来的了。
+HTTP 是一个无状态的协议，一次请求结束后，下次发送服务器就不知道这个请求是谁发来的了。
 
-Cookie-Session模式
+Cookie-Session 模式
 
 - 客户端使用用户名、密码进行认证
-- 服务端验证用户名、密码正确后生成并存储Session，将SessionID通过Cookie返回给客户端
-- 客户端访问需要认证的的接口时在cookie中携带sessionID
-- 服务端通过SessionID查找Session并进行鉴权，返回给客户端需要的数据
+- 服务端验证用户名、密码正确后生成并存储 Session，将 SessionID 通过 Cookie 返回给客户端
+- 客户端访问需要认证的的接口时在 cookie 中携带 sessionID
+- 服务端通过 SessionID 查找 Session 并进行鉴权，返回给客户端需要的数据
 
-Session和Cookie中存在多种问题
+Session 和 Cookie 中存在多种问题
 
-可以使用Token,无状态的鉴权
+可以使用 Token,无状态的鉴权
 
 ### 7、限制同一时间同一用户只能登录一台设备
 
-解决这个问题，在生成token的时候，拿到用户的id,将这个id与token的对应关系存储到redis里面，
-后续用户登录的时候，除了验证token是否有效，还可以通过用户的ID与redis里面的token时否对应，如果不一致，重新登录
+解决这个问题，在生成 token 的时候，拿到用户的 id,将这个 id 与 token 的对应关系存储到 redis 里面，
+后续用户登录的时候，除了验证 token 是否有效，还可以通过用户的 ID 与 redis 里面的 token 时否对应，如果不一致，重新登录
 
-
-### 8、AIR实现实时热重载
+### 8、AIR 实现实时热重载
 
 ### 9、分页展示
 
-### 10、解决传递给前端数字ID数据失真的问题
+### 10、解决传递给前端数字 ID 数据失真的问题
 
-RESTful API 数据通过JSON格式的数据
-前端js number 能表示的数字的范围是-(2^53-1)到(2^53-1)之间
-但是后端go的int64能表示的数字的范围是-(2^63-1)到(2^63-1)
+RESTful API 数据通过 JSON 格式的数据
+前端 js number 能表示的数字的范围是-(2^53-1)到(2^53-1)之间
+但是后端 go 的 int64 能表示的数字的范围是-(2^63-1)到(2^63-1)
+
+解决办法：前端传递的数据转成字符串传递给后端，后端传递给前端的数据在序列化的时候转成字符串
+
+```go
+type Person struct{
+    ID int64 `json:"id,string"`
+    Username string `json:"username"`
+}
+```
+
+在 json 的 tag 里面加给,string 就可以解决这个问题
+
+### 11、使用 Swagger 生成接口文档
+
+模型后面写注释可以在 swagger 文档里面显示这个注释
+在 tag 里面写 explame 可以在生成文档的时候显示出来
+有一个点，每个文档返回的数据不同，可以为接口定义一个专门的模型
+
+例如:
+
+```go
+type _ResponsePostList struct{
+
+}
+```
+
+### 12、为接口编写单元测试
+
+比如有这样一段代码
+
+```go
+
+package main
+
+func setupRouter() *gin.Engine {
+	r := gin.Default()
+	r.GET("/ping", func(c *gin.Context) {
+		c.String(200, "pong")
+	})
+	return r
+}
+
+func main() {
+	r := setupRouter()
+	r.Run(":8080")
+}
+```
+
+测试:
+
+```go
+package main
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestPingRoute(t *testing.T) {
+	router := setupRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/ping", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, 200, w.Code)
+	assert.Equal(t, "pong", w.Body.String())
+}
+```
+
+在 gin 对接口进行测试
+
+```go
+func TestCreatePostHandler(t *testing.T){
+    gin.SetMode(gin.TestMode)
+    r:= gin.Default()
+    url:="/api/v1/post"
+    r.Post(url,CreatePostHandler)
+
+    // 这个接口有一些依赖数据
+    // 我们自己造一些
+    body:=`{
+       "commuit_id":1,
+       "title":"test",
+       "content":"just a test"
+    }`
+
+    req,_:=http.NewRequest(http.MethodPost,url,bytes.NewReader([]byte(body)))
+    w:=httptest.NewRecorder()
+    r.ServeHTTP(w,req)
+
+    assert.Equal(t,200,w.Code)
+    // 判断响应的内容是不是按照预期返回了需要登录的错误
+    // 方法1：判断响应内容中是不是包含指定的字符串
+    assert.Contains(t,w.Body.String(),"需要登录")
+
+    // 方法二
+    res:=new(ResponseData)
+    if err:=json.Unmarshal(w.Body.Bytes(),res);err!=nil{
+        t.Fatal("json.Unmarshal w.Body failed,err:%v\n",err)
+    }
+    assert.Equal(t,res.Code,CodeNeedLogin)
+}
+```
+
+单元测试有一点需要注意:
+
+我们测试一个需要操作数据库的接口的时候，直接在测试函数里面执行这个函数是跑不通的
+
+因为单元测试只会执行这个函数，而数据库操作依赖一个 DB,他会报空指针引用
+解决办法：
+
+```go
+// 在test文件中创建一个init函数
+
+func init(){
+    // 这里填上我们需要的mysql配置文件信息
+    mysqlcfg:=&conf.MysqlConfig{
+
+    }
+    // 这里执行数据库初始化操作
+    // 初始化db
+    err:=Init(mysqlcfg)
+    if err!=nil{
+        panic(err)
+    }
+
+}
+```
+
+### 13、常用的 HTTP 压力测试
+
+压力测试相关术语
+
+- 响应时间(RT):指系统对请求做出响应的时间
+- 吞吐量:指系统在单位时间内处理的请求的数量
+- qps：每秒查询率，是一台服务器每秒能够响应的查询次数，是对一个特点的服务器在规定时间内所处理流量多少的衡量标准
+- TPS:每秒钟系统能够处理的交易或事务的数量
+- 并发连接数：某个时刻服务器能接收的请求总数
+
+压力测试工具:
+
+ab
+wrk
+
+### 14、限流策略
+
+漏桶和令牌桶
+
+漏桶按照固定的速率去处理，有点像削峰填谷
+但是它并不能很好的处理有大量突发请求的场景
+毕竟在某些情况下我们可能需要提高系统的处理效率，而不是一味的按照固定速率处理请求
+
+令牌桶
