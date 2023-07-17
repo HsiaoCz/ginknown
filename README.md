@@ -358,3 +358,53 @@ wrk
 毕竟在某些情况下我们可能需要提高系统的处理效率，而不是一味的按照固定速率处理请求
 
 令牌桶
+
+不断的往桶里放令牌，生成令牌的速度是恒定的，请求在桶里拿到令牌后可以被服务端处理，这种限流策略的好处是，有时候突然有大量请求时也能处理，当然，桶是有容量限制的，大量请求的时候，没拿到令牌的请求就需要等待
+
+### 15、使用 pprof 对 go 进行调优
+
+### 16、使用 docker 进行部署
+
+```dockerfile
+# 基于的基础镜像
+FROM golang:alpine
+
+# 为我们的镜像设置必要的环境变量
+ENV GO111MODULE=on \
+    CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64
+
+# 移动到工作目录: /build
+
+WORKDIR /build
+
+# 将代码复制到容器中
+
+COPY . .
+
+# 将我们的代码编译成二进制可执行文件app
+
+RUN go build -o app .
+
+# 移动到用于存放生成的二进制文件的/dist 目录
+WORKDIR /dist
+
+# 将二进制文件从/build 目录复制到这里
+
+RUN cp /build/app .
+
+# 声明服务端口
+EXPOSE 8888
+
+# 启动容器时运行的命令
+CMD ["/dist/app"]
+
+```
+
+docker build . -t goweb_app
+-t 指定名字
+
+docker run -p 8888:8888 goweb_app
+
+-p 指的是，容器里面的端口映射到系统的端口 8888
