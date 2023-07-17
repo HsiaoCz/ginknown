@@ -93,5 +93,81 @@ return err
 
 - 能够将事件记录到文件，而不是应用程序控制台
 - 日志切割，能够根据文件大小、时间或间隔等来切割日志文件
-- 支持不同的日志级别，例如INFO，DEBUG、ERROR等
+- 支持不同的日志级别，例如 INFO，DEBUG、ERROR 等
 - 能够打印基本信息，如调用文件/函数名和行号,日志时间等
+
+### 5、定义错误码
+
+```go
+/*
+
+{
+    code:1001
+    msg:请求成功
+    data:{}
+}
+*/
+
+// 对于响应，我们可以定义一个结构体
+type ResponseData struct{
+    Code ResCode  `json:"code"`
+    Msg  interface{} `json:"msg"`
+    Data interface{}   `json:"data"`
+}
+
+func ResponseErr(c *gin.Context,code ResCode){
+   responseData:=&ResponseData{
+    Code:code,
+    Msg:code.Msg(),
+    Data:nil,
+   }
+   c.JSON(http.StatusOk,responseData)
+}
+
+func ResponseErrorWithMsg(c *gin.Context,code ResCode,msg interface{}){
+    c.JSON(http.StatusOK,&ResponseData{
+        Code:code,
+        Msg:msg,
+        Data:nil,
+    })
+}
+
+func ResponseSuccess(c *gin.Context,data interface{}){
+    responseData:=&ResponseData{
+        Code:CodeSuccess,
+        Msg:CodeSuccess.Msg(),
+        Data:data,
+    }
+    c.JSON(http.StatusOK,responseData)
+}
+
+// 定义错误码
+type ResCode int
+
+const (
+   CodeSuccess=1000+iota
+   CodeInvalidParam
+   CodeUserExist
+   CodeUserNotExist
+   CodeInvalidPassword
+   CodeServerBusy
+)
+
+var codeMsgMap=map[ResCode]string{
+    CodeSuccess:"success",
+    CodeInvalidParam:"请求参数错误",
+    CodeUserExist:"用户名已存在",
+    CodeUserNotExist:"用户名不存在",
+    CodeInvalidPassword:"用户名或密码错误",
+    CodeServerBusy:"服务繁忙",
+}
+
+func (c ResCode)Msg()string{
+    msg,ok:=codeMsgMap[c]
+    if !ok{
+        msg=codeMsgMap[CodeServerBusy]
+    }
+    return msg
+}
+
+```
